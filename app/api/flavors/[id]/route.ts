@@ -25,12 +25,12 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAdmin()
+  const { error, user } = await requireAdmin()
   if (error) return error
 
   const { id } = await params
   const body = await request.json()
-  const updates: Record<string, unknown> = {}
+  const updates: Record<string, unknown> = { modified_by_user_id: user!.id }
 
   if (body.slug !== undefined) updates.slug = body.slug
   if (body.description !== undefined) updates.description = body.description

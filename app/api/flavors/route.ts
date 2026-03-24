@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const { error } = await requireAdmin()
+  const { error, user } = await requireAdmin()
   if (error) return error
 
   const body = await request.json()
@@ -30,7 +30,12 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient()
   const { data, error: dbError } = await admin
     .from('humor_flavors')
-    .insert({ slug, description })
+    .insert({
+      slug,
+      description,
+      created_by_user_id: user!.id,
+      modified_by_user_id: user!.id,
+    })
     .select()
     .single()
 

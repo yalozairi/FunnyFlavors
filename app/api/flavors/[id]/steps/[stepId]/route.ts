@@ -6,7 +6,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; stepId: string }> }
 ) {
-  const { error } = await requireAdmin()
+  const { error, user } = await requireAdmin()
   if (error) return error
 
   const { stepId } = await params
@@ -21,7 +21,7 @@ export async function PATCH(
     'system_prompt',
   ]
 
-  const updates: Record<string, unknown> = {}
+  const updates: Record<string, unknown> = { modified_by_user_id: user!.id }
   for (const key of allowed) {
     if (key in body) updates[key] = body[key]
   }
@@ -42,7 +42,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; stepId: string }> }
 ) {
-  const { error } = await requireAdmin()
+  const { error, user } = await requireAdmin()
   if (error) return error
 
   const { id, stepId } = await params
@@ -68,7 +68,7 @@ export async function DELETE(
       remaining.map((step, index) =>
         admin
           .from('humor_flavor_steps')
-          .update({ order_by: index + 1 })
+          .update({ order_by: index + 1, modified_by_user_id: user!.id })
           .eq('id', step.id)
       )
     )

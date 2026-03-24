@@ -25,7 +25,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAdmin()
+  const { error, user } = await requireAdmin()
   if (error) return error
 
   const { id } = await params
@@ -55,6 +55,8 @@ export async function POST(
       description: body.description ?? null,
       prompt: body.prompt ?? null,
       system_prompt: body.system_prompt ?? null,
+      created_by_user_id: user!.id,
+      modified_by_user_id: user!.id,
     })
     .select()
     .single()
