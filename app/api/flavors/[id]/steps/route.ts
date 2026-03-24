@@ -6,8 +6,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAdmin()
-  if (error) return error
+  const { error: authError } = await requireAdmin()
+  if (authError) return authError
 
   const { id } = await params
   const admin = createAdminClient()
@@ -25,7 +25,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error, user } = await requireAdmin()
+  const { error, userId } = await requireAdmin()
   if (error) return error
 
   const { id } = await params
@@ -55,8 +55,8 @@ export async function POST(
       description: body.description ?? null,
       prompt: body.prompt ?? null,
       system_prompt: body.system_prompt ?? null,
-      created_by_user_id: user!.id,
-      modified_by_user_id: user!.id,
+      created_by_user_id: userId,
+      modified_by_user_id: userId,
     })
     .select()
     .single()

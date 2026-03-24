@@ -6,8 +6,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAdmin()
-  if (error) return error
+  const { error: authError } = await requireAdmin()
+  if (authError) return authError
 
   const { id } = await params
   const admin = createAdminClient()
@@ -25,12 +25,12 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error, user } = await requireAdmin()
+  const { error, userId } = await requireAdmin()
   if (error) return error
 
   const { id } = await params
   const body = await request.json()
-  const updates: Record<string, unknown> = { modified_by_user_id: user!.id }
+  const updates: Record<string, unknown> = { modified_by_user_id: userId }
 
   if (body.slug !== undefined) updates.slug = body.slug
   if (body.description !== undefined) updates.description = body.description
@@ -51,8 +51,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAdmin()
-  if (error) return error
+  const { error: authError } = await requireAdmin()
+  if (authError) return authError
 
   const { id } = await params
   const admin = createAdminClient()

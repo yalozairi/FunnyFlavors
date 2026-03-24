@@ -7,19 +7,20 @@ export async function requireAdmin() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), user: null }
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), userId: null }
   }
 
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from('profiles')
-    .select('is_superadmin, is_matrix_admin')
+    .select('id, is_superadmin, is_matrix_admin')
     .eq('id', user.id)
     .single()
 
   if (!profile?.is_superadmin && !profile?.is_matrix_admin) {
-    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }), user: null }
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }), userId: null }
   }
 
-  return { error: null, user }
+  // Explicitly use profile.id (the profiles table primary key) as the user identifier
+  return { error: null, userId: profile.id as string }
 }

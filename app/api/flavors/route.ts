@@ -3,8 +3,8 @@ import { requireAdmin } from '../auth-check'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET() {
-  const { error } = await requireAdmin()
-  if (error) return error
+  const { error: authError } = await requireAdmin()
+  if (authError) return authError
 
   const admin = createAdminClient()
   const { data, error: dbError } = await admin
@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const { error, user } = await requireAdmin()
+  const { error, userId } = await requireAdmin()
   if (error) return error
 
   const body = await request.json()
@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
     .insert({
       slug,
       description,
-      created_by_user_id: user!.id,
-      modified_by_user_id: user!.id,
+      created_by_user_id: userId,
+      modified_by_user_id: userId,
     })
     .select()
     .single()

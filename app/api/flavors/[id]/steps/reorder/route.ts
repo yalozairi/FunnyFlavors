@@ -6,7 +6,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error, user } = await requireAdmin()
+  const { error, userId } = await requireAdmin()
   if (error) return error
 
   const { id } = await params
@@ -42,8 +42,8 @@ export async function POST(
 
   // Swap order_by values
   await Promise.all([
-    admin.from('humor_flavor_steps').update({ order_by: swap.order_by, modified_by_user_id: user!.id }).eq('id', current.id),
-    admin.from('humor_flavor_steps').update({ order_by: current.order_by, modified_by_user_id: user!.id }).eq('id', swap.id),
+    admin.from('humor_flavor_steps').update({ order_by: swap.order_by, modified_by_user_id: userId }).eq('id', current.id),
+    admin.from('humor_flavor_steps').update({ order_by: current.order_by, modified_by_user_id: userId }).eq('id', swap.id),
   ])
 
   return NextResponse.json({ success: true })
