@@ -11,15 +11,20 @@ export default async function FlavorsLayout({ children }: { children: React.Reac
     redirect('/login')
   }
 
-  // Verify superadmin or matrix_admin status using service-role client
-  const admin = createAdminClient()
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('is_superadmin, is_matrix_admin')
-    .eq('id', user.id)
-    .single()
+  // Verify superadmin or matrix_admin status — deny on any failure
+  try {
+    const admin = createAdminClient()
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('is_superadmin, is_matrix_admin')
+      .eq('id', user.id)
+      .single()
 
-  if (!profile?.is_superadmin && !profile?.is_matrix_admin) {
+    if (!profile?.is_superadmin && !profile?.is_matrix_admin) {
+      await supabase.auth.signOut()
+      redirect('/login?error=unauthorized')
+    }
+  } catch {
     await supabase.auth.signOut()
     redirect('/login?error=unauthorized')
   }
