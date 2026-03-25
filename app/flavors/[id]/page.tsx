@@ -10,7 +10,7 @@ export default async function FlavorDetailPage({ params }: { params: Promise<{ i
   const { id } = await params
   const admin = createAdminClient()
 
-  const [flavorRes, stepsRes, modelsRes, stepTypesRes, inputTypesRes] = await Promise.all([
+  const [flavorRes, stepsRes, modelsRes, stepTypesRes, inputTypesRes, outputTypesRes] = await Promise.all([
     admin.from('humor_flavors').select('*').eq('id', Number(id)).single(),
     admin.from('humor_flavor_steps')
       .select('*')
@@ -19,6 +19,7 @@ export default async function FlavorDetailPage({ params }: { params: Promise<{ i
     admin.from('llm_models').select('id, name').order('name'),
     admin.from('humor_flavor_step_types').select('id, slug, description').order('slug'),
     admin.from('llm_input_types').select('id, slug, description').order('slug'),
+    admin.from('llm_output_types').select('id, slug, description').order('slug'),
   ])
 
   if (flavorRes.error || !flavorRes.data) {
@@ -30,6 +31,7 @@ export default async function FlavorDetailPage({ params }: { params: Promise<{ i
   const models = modelsRes.data ?? []
   const stepTypes = stepTypesRes.data ?? []
   const inputTypes = inputTypesRes.data ?? []
+  const outputTypes = outputTypesRes.data ?? []
 
   return (
     <div className="max-w-4xl">
@@ -59,6 +61,7 @@ export default async function FlavorDetailPage({ params }: { params: Promise<{ i
           models={models}
           stepTypes={stepTypes}
           inputTypes={inputTypes}
+          outputTypes={outputTypes}
         />
       </div>
     </div>

@@ -15,9 +15,12 @@ export async function PATCH(
   const allowed = [
     'humor_flavor_step_type_id',
     'llm_input_type_id',
+    'llm_output_type_id',
     'llm_model_id',
     'llm_temperature',
     'description',
+    'llm_system_prompt',
+    'llm_user_prompt',
   ]
 
   const updates: Record<string, unknown> = { modified_by_user_id: userId }

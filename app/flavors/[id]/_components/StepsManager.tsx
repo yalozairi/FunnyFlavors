@@ -8,9 +8,13 @@ interface Step {
   humor_flavor_id: number
   order_by: number
   humor_flavor_step_type_id: number | null
+  llm_input_type_id: number | null
+  llm_output_type_id: number | null
   llm_model_id: number | null
   llm_temperature: number | null
   description: string | null
+  llm_system_prompt: string | null
+  llm_user_prompt: string | null
   [key: string]: unknown
 }
 
@@ -19,13 +23,7 @@ interface Model {
   name: string
 }
 
-interface StepType {
-  id: number
-  slug: string
-  description: string | null
-}
-
-interface InputType {
+interface LookupType {
   id: number
   slug: string
   description: string | null
@@ -35,8 +33,9 @@ interface Props {
   flavorId: number
   steps: Step[]
   models: Model[]
-  stepTypes: StepType[]
-  inputTypes: InputType[]
+  stepTypes: LookupType[]
+  inputTypes: LookupType[]
+  outputTypes: LookupType[]
 }
 
 function StepCard({
@@ -46,6 +45,7 @@ function StepCard({
   models,
   stepTypes,
   inputTypes,
+  outputTypes,
   flavorId,
   onRefresh,
 }: {
@@ -53,8 +53,9 @@ function StepCard({
   index: number
   total: number
   models: Model[]
-  stepTypes: StepType[]
-  inputTypes: InputType[]
+  stepTypes: LookupType[]
+  inputTypes: LookupType[]
+  outputTypes: LookupType[]
   flavorId: number
   onRefresh: () => void
 }) {
@@ -65,9 +66,12 @@ function StepCard({
 
   const [stepTypeId, setStepTypeId] = useState(String(step.humor_flavor_step_type_id ?? ''))
   const [inputTypeId, setInputTypeId] = useState(String(step.llm_input_type_id ?? ''))
+  const [outputTypeId, setOutputTypeId] = useState(String(step.llm_output_type_id ?? ''))
   const [modelId, setModelId] = useState(String(step.llm_model_id ?? ''))
   const [temperature, setTemperature] = useState(String(step.llm_temperature ?? '0.7'))
   const [description, setDescription] = useState(step.description ?? '')
+  const [systemPrompt, setSystemPrompt] = useState(step.llm_system_prompt ?? '')
+  const [userPrompt, setUserPrompt] = useState(step.llm_user_prompt ?? '')
   const [saving, setSaving] = useState(false)
 
   const modelName = models.find((m) => m.id === step.llm_model_id)?.name ?? `#${step.llm_model_id}`
@@ -83,9 +87,12 @@ function StepCard({
         body: JSON.stringify({
           humor_flavor_step_type_id: stepTypeId ? Number(stepTypeId) : null,
           llm_input_type_id: inputTypeId ? Number(inputTypeId) : null,
+          llm_output_type_id: outputTypeId ? Number(outputTypeId) : null,
           llm_model_id: modelId ? Number(modelId) : null,
           llm_temperature: temperature ? Number(temperature) : null,
           description,
+          llm_system_prompt: systemPrompt || null,
+          llm_user_prompt: userPrompt || null,
         }),
       })
       if (!res.ok) {
@@ -180,6 +187,11 @@ function StepCard({
               {step.description && (
                 <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{step.description}</p>
               )}
+              {step.llm_user_prompt && (
+                <p className="text-xs text-slate-500 dark:text-slate-500 font-mono bg-slate-50 dark:bg-slate-800/50 rounded p-2 mt-2 line-clamp-2">
+                  {step.llm_user_prompt}
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -201,13 +213,13 @@ function StepCard({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Input Type</label>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Input Type <span className="text-red-500">*</span></label>
                   <select
                     value={inputTypeId}
                     onChange={(e) => setInputTypeId(e.target.value)}
                     className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
                   >
-                    <option value="">— none —</option>
+                    <option value="">— select —</option>
                     {inputTypes.map((it) => (
                       <option key={it.id} value={it.id}>{it.slug}</option>
                     ))}
@@ -215,6 +227,19 @@ function StepCard({
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Output Type <span className="text-red-500">*</span></label>
+                  <select
+                    value={outputTypeId}
+                    onChange={(e) => setOutputTypeId(e.target.value)}
+                    className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="">— select —</option>
+                    {outputTypes.map((ot) => (
+                      <option key={ot.id} value={ot.id}>{ot.slug}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model</label>
                   <select
@@ -249,6 +274,26 @@ function StepCard({
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Step description..."
                   className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt</label>
+                <textarea
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  rows={3}
+                  placeholder="System prompt for this step..."
+                  className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt</label>
+                <textarea
+                  value={userPrompt}
+                  onChange={(e) => setUserPrompt(e.target.value)}
+                  rows={3}
+                  placeholder="User prompt for this step..."
+                  className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
                 />
               </div>
               <div className="flex gap-2">
@@ -297,15 +342,18 @@ function StepCard({
   )
 }
 
-export default function StepsManager({ flavorId, steps: initialSteps, models, stepTypes, inputTypes }: Props) {
+export default function StepsManager({ flavorId, steps: initialSteps, models, stepTypes, inputTypes, outputTypes }: Props) {
   const router = useRouter()
   const [steps, setSteps] = useState(initialSteps)
   const [showNewForm, setShowNewForm] = useState(false)
   const [newStepTypeId, setNewStepTypeId] = useState('')
   const [newInputTypeId, setNewInputTypeId] = useState('')
+  const [newOutputTypeId, setNewOutputTypeId] = useState('')
   const [newModelId, setNewModelId] = useState('')
   const [newTemperature, setNewTemperature] = useState('0.7')
   const [newDescription, setNewDescription] = useState('')
+  const [newSystemPrompt, setNewSystemPrompt] = useState('')
+  const [newUserPrompt, setNewUserPrompt] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
@@ -324,9 +372,12 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
         body: JSON.stringify({
           humor_flavor_step_type_id: newStepTypeId ? Number(newStepTypeId) : null,
           llm_input_type_id: newInputTypeId ? Number(newInputTypeId) : null,
+          llm_output_type_id: newOutputTypeId ? Number(newOutputTypeId) : null,
           llm_model_id: newModelId ? Number(newModelId) : null,
           llm_temperature: newTemperature ? Number(newTemperature) : 0.7,
           description: newDescription || null,
+          llm_system_prompt: newSystemPrompt || null,
+          llm_user_prompt: newUserPrompt || null,
         }),
       })
       if (!res.ok) {
@@ -338,9 +389,12 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
       setShowNewForm(false)
       setNewStepTypeId('')
       setNewInputTypeId('')
+      setNewOutputTypeId('')
       setNewModelId('')
       setNewTemperature('0.7')
       setNewDescription('')
+      setNewSystemPrompt('')
+      setNewUserPrompt('')
       router.refresh()
     } catch (err: unknown) {
       setCreateError(err instanceof Error ? err.message : 'Unknown error')
@@ -390,6 +444,22 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
               </select>
             </div>
             <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model</label>
+              <select
+                value={newModelId}
+                onChange={(e) => setNewModelId(e.target.value)}
+                className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="">— none —</option>
+                {models.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Input Type <span className="text-red-500">*</span></label>
               <select
                 value={newInputTypeId}
@@ -403,18 +473,17 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
                 ))}
               </select>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Output Type <span className="text-red-500">*</span></label>
               <select
-                value={newModelId}
-                onChange={(e) => setNewModelId(e.target.value)}
+                value={newOutputTypeId}
+                onChange={(e) => setNewOutputTypeId(e.target.value)}
+                required
                 className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
               >
-                <option value="">— none —</option>
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
+                <option value="">— select —</option>
+                {outputTypes.map((ot) => (
+                  <option key={ot.id} value={ot.id}>{ot.slug}</option>
                 ))}
               </select>
             </div>
@@ -441,6 +510,28 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
               onChange={(e) => setNewDescription(e.target.value)}
               placeholder="What does this step do?"
               className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt</label>
+            <textarea
+              value={newSystemPrompt}
+              onChange={(e) => setNewSystemPrompt(e.target.value)}
+              rows={3}
+              placeholder="System prompt for this step..."
+              className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt</label>
+            <textarea
+              value={newUserPrompt}
+              onChange={(e) => setNewUserPrompt(e.target.value)}
+              rows={3}
+              placeholder="User prompt for this step..."
+              className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
             />
           </div>
 
@@ -474,6 +565,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
             models={models}
             stepTypes={stepTypes}
             inputTypes={inputTypes}
+            outputTypes={outputTypes}
             flavorId={flavorId}
             onRefresh={handleRefresh}
           />
