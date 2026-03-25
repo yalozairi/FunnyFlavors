@@ -48,6 +48,7 @@ function StepCard({
   outputTypes,
   flavorId,
   onRefresh,
+  onMove,
 }: {
   step: Step
   index: number
@@ -58,6 +59,7 @@ function StepCard({
   outputTypes: LookupType[]
   flavorId: number
   onRefresh: () => void
+  onMove: (stepId: number, direction: 'up' | 'down') => Promise<void>
 }) {
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -128,16 +130,7 @@ function StepCard({
     setMoving(true)
     setError('')
     try {
-      const res = await fetch(`/api/flavors/${flavorId}/steps/reorder`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepId: step.id, direction }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error ?? 'Failed to reorder')
-      }
-      onRefresh()
+      await onMove(step.id, direction)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -361,6 +354,31 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
     router.refresh()
   }
 
+  const handleMove = async (stepId: number, direction: 'up' | 'down') => {
+    const res = await fetch(`/api/flavors/${flavorId}/steps/reorder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stepId, direction }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error ?? 'Failed to reorder')
+    }
+    setSteps((prev) => {
+      const idx = prev.findIndex((s) => s.id === stepId)
+      if (idx === -1) return prev
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+      if (swapIdx < 0 || swapIdx >= prev.length) return prev
+      const next = [...prev]
+      const tempOrder = next[idx].order_by
+      next[idx] = { ...next[idx], order_by: next[swapIdx].order_by }
+      next[swapIdx] = { ...next[swapIdx], order_by: tempOrder }
+      return direction === 'up'
+        ? [...next.slice(0, swapIdx), next[idx], next[swapIdx], ...next.slice(swapIdx + 2)]
+        : [...next.slice(0, idx), next[swapIdx], next[idx], ...next.slice(idx + 2)]
+    })
+  }
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setCreating(true)
@@ -568,6 +586,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
             outputTypes={outputTypes}
             flavorId={flavorId}
             onRefresh={handleRefresh}
+            onMove={handleMove}
           />
         ))}
 
