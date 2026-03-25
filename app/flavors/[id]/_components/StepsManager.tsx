@@ -49,6 +49,7 @@ function StepCard({
   flavorId,
   onRefresh,
   onMove,
+  onDelete,
 }: {
   step: Step
   index: number
