@@ -60,6 +60,7 @@ function StepCard({
   flavorId: number
   onRefresh: () => void
   onMove: (stepId: number, direction: 'up' | 'down') => Promise<void>
+  onDelete: (stepId: number) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -119,7 +120,7 @@ function StepCard({
         const data = await res.json()
         throw new Error(data.error ?? 'Failed to delete')
       }
-      onRefresh()
+      onDelete(step.id)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       setDeleting(false)
@@ -352,6 +353,13 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
 
   const handleRefresh = () => {
     router.refresh()
+  }
+
+  const handleDelete = (stepId: number) => {
+    setSteps((prev) => {
+      const filtered = prev.filter((s) => s.id !== stepId)
+      return filtered.map((s, i) => ({ ...s, order_by: i + 1 }))
+    })
   }
 
   const handleMove = async (stepId: number, direction: 'up' | 'down') => {
@@ -587,6 +595,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
             flavorId={flavorId}
             onRefresh={handleRefresh}
             onMove={handleMove}
+            onDelete={handleDelete}
           />
         ))}
 
