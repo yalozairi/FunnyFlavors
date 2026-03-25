@@ -25,11 +25,18 @@ interface StepType {
   description: string | null
 }
 
+interface InputType {
+  id: number
+  slug: string
+  description: string | null
+}
+
 interface Props {
   flavorId: number
   steps: Step[]
   models: Model[]
   stepTypes: StepType[]
+  inputTypes: InputType[]
 }
 
 function StepCard({
@@ -38,6 +45,7 @@ function StepCard({
   total,
   models,
   stepTypes,
+  inputTypes,
   flavorId,
   onRefresh,
 }: {
@@ -46,6 +54,7 @@ function StepCard({
   total: number
   models: Model[]
   stepTypes: StepType[]
+  inputTypes: InputType[]
   flavorId: number
   onRefresh: () => void
 }) {
@@ -55,6 +64,7 @@ function StepCard({
   const [error, setError] = useState('')
 
   const [stepTypeId, setStepTypeId] = useState(String(step.humor_flavor_step_type_id ?? ''))
+  const [inputTypeId, setInputTypeId] = useState(String(step.llm_input_type_id ?? ''))
   const [modelId, setModelId] = useState(String(step.llm_model_id ?? ''))
   const [temperature, setTemperature] = useState(String(step.llm_temperature ?? '0.7'))
   const [description, setDescription] = useState(step.description ?? '')
@@ -72,6 +82,7 @@ function StepCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           humor_flavor_step_type_id: stepTypeId ? Number(stepTypeId) : null,
+          llm_input_type_id: inputTypeId ? Number(inputTypeId) : null,
           llm_model_id: modelId ? Number(modelId) : null,
           llm_temperature: temperature ? Number(temperature) : null,
           description,
@@ -190,6 +201,21 @@ function StepCard({
                   </select>
                 </div>
                 <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Input Type</label>
+                  <select
+                    value={inputTypeId}
+                    onChange={(e) => setInputTypeId(e.target.value)}
+                    className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="">— none —</option>
+                    {inputTypes.map((it) => (
+                      <option key={it.id} value={it.id}>{it.slug}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model</label>
                   <select
                     value={modelId}
@@ -271,11 +297,12 @@ function StepCard({
   )
 }
 
-export default function StepsManager({ flavorId, steps: initialSteps, models, stepTypes }: Props) {
+export default function StepsManager({ flavorId, steps: initialSteps, models, stepTypes, inputTypes }: Props) {
   const router = useRouter()
   const [steps, setSteps] = useState(initialSteps)
   const [showNewForm, setShowNewForm] = useState(false)
   const [newStepTypeId, setNewStepTypeId] = useState('')
+  const [newInputTypeId, setNewInputTypeId] = useState('')
   const [newModelId, setNewModelId] = useState('')
   const [newTemperature, setNewTemperature] = useState('0.7')
   const [newDescription, setNewDescription] = useState('')
@@ -296,6 +323,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           humor_flavor_step_type_id: newStepTypeId ? Number(newStepTypeId) : null,
+          llm_input_type_id: newInputTypeId ? Number(newInputTypeId) : null,
           llm_model_id: newModelId ? Number(newModelId) : null,
           llm_temperature: newTemperature ? Number(newTemperature) : 0.7,
           description: newDescription || null,
@@ -309,6 +337,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
       setSteps((prev) => [...prev, newStep])
       setShowNewForm(false)
       setNewStepTypeId('')
+      setNewInputTypeId('')
       setNewModelId('')
       setNewTemperature('0.7')
       setNewDescription('')
@@ -360,6 +389,22 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Input Type <span className="text-red-500">*</span></label>
+              <select
+                value={newInputTypeId}
+                onChange={(e) => setNewInputTypeId(e.target.value)}
+                required
+                className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="">— select —</option>
+                {inputTypes.map((it) => (
+                  <option key={it.id} value={it.id}>{it.slug}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model</label>
               <select
@@ -428,6 +473,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
             total={steps.length}
             models={models}
             stepTypes={stepTypes}
+            inputTypes={inputTypes}
             flavorId={flavorId}
             onRefresh={handleRefresh}
           />

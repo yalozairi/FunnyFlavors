@@ -50,6 +50,7 @@ export async function POST(
       humor_flavor_id: Number(id),
       order_by: nextOrder,
       humor_flavor_step_type_id: body.humor_flavor_step_type_id ?? null,
+      llm_input_type_id: body.llm_input_type_id ?? null,
       llm_model_id: body.llm_model_id ?? null,
       llm_temperature: body.llm_temperature ?? 0.7,
       description: body.description ?? null,
