@@ -53,8 +53,6 @@ export async function POST(
       llm_model_id: body.llm_model_id ?? null,
       llm_temperature: body.llm_temperature ?? 0.7,
       description: body.description ?? null,
-      prompt: body.prompt ?? null,
-      system_prompt: body.system_prompt ?? null,
       created_by_user_id: userId,
       modified_by_user_id: userId,
     })

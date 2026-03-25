@@ -11,8 +11,6 @@ interface Step {
   llm_model_id: number | null
   llm_temperature: number | null
   description: string | null
-  prompt: string | null
-  system_prompt: string | null
   [key: string]: unknown
 }
 
@@ -60,8 +58,6 @@ function StepCard({
   const [modelId, setModelId] = useState(String(step.llm_model_id ?? ''))
   const [temperature, setTemperature] = useState(String(step.llm_temperature ?? '0.7'))
   const [description, setDescription] = useState(step.description ?? '')
-  const [prompt, setPrompt] = useState(step.prompt ?? '')
-  const [systemPrompt, setSystemPrompt] = useState(step.system_prompt ?? '')
   const [saving, setSaving] = useState(false)
 
   const modelName = models.find((m) => m.id === step.llm_model_id)?.name ?? `#${step.llm_model_id}`
@@ -79,8 +75,6 @@ function StepCard({
           llm_model_id: modelId ? Number(modelId) : null,
           llm_temperature: temperature ? Number(temperature) : null,
           description,
-          prompt: prompt || null,
-          system_prompt: systemPrompt || null,
         }),
       })
       if (!res.ok) {
@@ -175,11 +169,6 @@ function StepCard({
               {step.description && (
                 <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{step.description}</p>
               )}
-              {step.prompt && (
-                <p className="text-xs text-slate-500 dark:text-slate-500 font-mono bg-slate-50 dark:bg-slate-800/50 rounded p-2 mt-2 line-clamp-2">
-                  {step.prompt}
-                </p>
-              )}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -236,26 +225,6 @@ function StepCard({
                   className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt</label>
-                <textarea
-                  value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
-                  rows={3}
-                  placeholder="System prompt for this step..."
-                  className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt</label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={3}
-                  placeholder="User prompt for this step..."
-                  className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
-                />
-              </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleSave}
@@ -310,8 +279,6 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
   const [newModelId, setNewModelId] = useState('')
   const [newTemperature, setNewTemperature] = useState('0.7')
   const [newDescription, setNewDescription] = useState('')
-  const [newPrompt, setNewPrompt] = useState('')
-  const [newSystemPrompt, setNewSystemPrompt] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
@@ -332,8 +299,6 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
           llm_model_id: newModelId ? Number(newModelId) : null,
           llm_temperature: newTemperature ? Number(newTemperature) : 0.7,
           description: newDescription || null,
-          prompt: newPrompt || null,
-          system_prompt: newSystemPrompt || null,
         }),
       })
       if (!res.ok) {
@@ -347,8 +312,6 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
       setNewModelId('')
       setNewTemperature('0.7')
       setNewDescription('')
-      setNewPrompt('')
-      setNewSystemPrompt('')
       router.refresh()
     } catch (err: unknown) {
       setCreateError(err instanceof Error ? err.message : 'Unknown error')
@@ -433,28 +396,6 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
               onChange={(e) => setNewDescription(e.target.value)}
               placeholder="What does this step do?"
               className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt</label>
-            <textarea
-              value={newSystemPrompt}
-              onChange={(e) => setNewSystemPrompt(e.target.value)}
-              rows={3}
-              placeholder="System prompt for this step..."
-              className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt</label>
-            <textarea
-              value={newPrompt}
-              onChange={(e) => setNewPrompt(e.target.value)}
-              rows={3}
-              placeholder="User prompt for this step..."
-              className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none font-mono"
             />
           </div>
 

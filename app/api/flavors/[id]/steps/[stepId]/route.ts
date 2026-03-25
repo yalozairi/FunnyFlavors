@@ -17,8 +17,6 @@ export async function PATCH(
     'llm_model_id',
     'llm_temperature',
     'description',
-    'prompt',
-    'system_prompt',
   ]
 
   const updates: Record<string, unknown> = { modified_by_user_id: userId }
