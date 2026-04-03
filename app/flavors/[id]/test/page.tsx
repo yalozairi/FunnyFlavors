@@ -10,13 +10,14 @@ export default async function TestFlavorPage({ params }: { params: Promise<{ id:
   const { id } = await params
   const admin = createAdminClient()
 
-  const [flavorRes, captionsRes] = await Promise.all([
+  const [flavorRes, captionsRes, testImagesRes] = await Promise.all([
     admin.from('humor_flavors').select('id, slug, description').eq('id', Number(id)).single(),
     admin.from('captions')
       .select('id, content, created_datetime_utc, images!left(id, url)')
       .eq('humor_flavor_id', Number(id))
       .order('created_datetime_utc', { ascending: false })
       .limit(20),
+    admin.from('images').select('id, url').eq('is_common_use', true).order('id'),
   ])
 
   if (flavorRes.error || !flavorRes.data) {
@@ -25,6 +26,7 @@ export default async function TestFlavorPage({ params }: { params: Promise<{ id:
 
   const flavor = flavorRes.data
   const captions = captionsRes.data ?? []
+  const testImages = testImagesRes.data ?? []
 
   return (
     <div className="max-w-4xl">
@@ -44,7 +46,7 @@ export default async function TestFlavorPage({ params }: { params: Promise<{ id:
       </div>
 
       <div className="grid gap-6">
-        <TestCaptionGenerator flavorId={flavor.id} flavorSlug={flavor.slug} />
+        <TestCaptionGenerator flavorId={flavor.id} flavorSlug={flavor.slug} testImages={testImages} />
         <FlavorCaptions captions={captions} />
       </div>
     </div>

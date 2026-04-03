@@ -195,7 +195,7 @@ function StepCard({
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Step Type</label>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Step Type <span className="text-red-500">*</span></label>
                   <select
                     value={stepTypeId}
                     onChange={(e) => setStepTypeId(e.target.value)}
@@ -236,7 +236,7 @@ function StepCard({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model</label>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model <span className="text-red-500">*</span></label>
                   <select
                     value={modelId}
                     onChange={(e) => setModelId(e.target.value)}
@@ -250,7 +250,7 @@ function StepCard({
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Temperature</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Temperature <span className="text-red-500">*</span></label>
                 <input
                   type="number"
                   min="0"
@@ -262,7 +262,7 @@ function StepCard({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Description</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Description <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={description}
@@ -272,7 +272,7 @@ function StepCard({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt <span className="text-red-500">*</span></label>
                 <textarea
                   value={systemPrompt}
                   onChange={(e) => setSystemPrompt(e.target.value)}
@@ -282,7 +282,7 @@ function StepCard({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt <span className="text-red-500">*</span></label>
                 <textarea
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
@@ -458,7 +458,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Step Type</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Step Type <span className="text-red-500">*</span></label>
               <select
                 value={newStepTypeId}
                 onChange={(e) => setNewStepTypeId(e.target.value)}
@@ -471,7 +471,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LLM Model <span className="text-red-500">*</span></label>
               <select
                 value={newModelId}
                 onChange={(e) => setNewModelId(e.target.value)}
@@ -517,7 +517,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Temperature</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Temperature <span className="text-red-500">*</span></label>
             <input
               type="number"
               min="0"
@@ -530,7 +530,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Description <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={newDescription}
@@ -541,7 +541,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">System Prompt <span className="text-red-500">*</span></label>
             <textarea
               value={newSystemPrompt}
               onChange={(e) => setNewSystemPrompt(e.target.value)}
@@ -552,7 +552,7 @@ export default function StepsManager({ flavorId, steps: initialSteps, models, st
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Prompt <span className="text-red-500">*</span></label>
             <textarea
               value={newUserPrompt}
               onChange={(e) => setNewUserPrompt(e.target.value)}

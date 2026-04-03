@@ -6,6 +6,12 @@ import { createClient } from '@/lib/supabase/client'
 const API_BASE = 'https://api.almostcrackd.ai'
 
 type Step = 'idle' | 'presign' | 'upload' | 'register' | 'captions' | 'done' | 'error'
+type Mode = 'test' | 'upload'
+
+interface TestImage {
+  id: number
+  url: string
+}
 
 interface Caption {
   id: string
@@ -16,12 +22,17 @@ interface Caption {
 export default function TestCaptionGenerator({
   flavorId,
   flavorSlug,
+  testImages,
 }: {
   flavorId: number
   flavorSlug: string
+  testImages: TestImage[]
 }) {
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [mode, setMode] = useState<Mode>('test')
+  const [selectedTestImage, setSelectedTestImage] = useState<TestImage | null>(null)
 
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -44,7 +55,8 @@ export default function TestCaptionGenerator({
   }
 
   const handleGenerate = async () => {
-    if (!file) return
+    if (mode === 'test' && !selectedTestImage) return
+    if (mode === 'upload' && !file) return
 
     setErrorMsg('')
     setCaptions([])
@@ -57,37 +69,46 @@ export default function TestCaptionGenerator({
 
       const authHeader = { Authorization: `Bearer ${token}` }
 
-      // Step 1: Presign
-      setStep('presign')
-      const presignRes = await fetch(`${API_BASE}/pipeline/generate-presigned-url`, {
-        method: 'POST',
-        headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contentType: file.type }),
-      })
-      if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status}`)
-      const { presignedUrl, cdnUrl } = await presignRes.json()
+      let imageId: number
 
-      // Step 2: Upload
-      setStep('upload')
-      const uploadRes = await fetch(presignedUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      })
-      if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`)
-      setUploadedImageUrl(cdnUrl)
+      if (mode === 'test' && selectedTestImage) {
+        // Test image is already registered — skip upload steps
+        imageId = selectedTestImage.id
+        setUploadedImageUrl(selectedTestImage.url)
+      } else {
+        // Step 1: Presign
+        setStep('presign')
+        const presignRes = await fetch(`${API_BASE}/pipeline/generate-presigned-url`, {
+          method: 'POST',
+          headers: { ...authHeader, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentType: file!.type }),
+        })
+        if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status}`)
+        const { presignedUrl, cdnUrl } = await presignRes.json()
 
-      // Step 3: Register
-      setStep('register')
-      const registerRes = await fetch(`${API_BASE}/pipeline/upload-image-from-url`, {
-        method: 'POST',
-        headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false }),
-      })
-      if (!registerRes.ok) throw new Error(`Register failed: ${registerRes.status}`)
-      const { imageId } = await registerRes.json()
+        // Step 2: Upload
+        setStep('upload')
+        const uploadRes = await fetch(presignedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file!.type },
+          body: file,
+        })
+        if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`)
+        setUploadedImageUrl(cdnUrl)
 
-      // Step 4: Generate captions with the specific humor flavor
+        // Step 3: Register
+        setStep('register')
+        const registerRes = await fetch(`${API_BASE}/pipeline/upload-image-from-url`, {
+          method: 'POST',
+          headers: { ...authHeader, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false }),
+        })
+        if (!registerRes.ok) throw new Error(`Register failed: ${registerRes.status}`)
+        const data = await registerRes.json()
+        imageId = data.imageId
+      }
+
+      // Generate captions with the specific humor flavor
       setStep('captions')
       const captionsRes = await fetch(`${API_BASE}/pipeline/generate-captions`, {
         method: 'POST',
@@ -110,12 +131,13 @@ export default function TestCaptionGenerator({
     presign: 'Step 1/4 — Generating upload URL...',
     upload: 'Step 2/4 — Uploading image...',
     register: 'Step 3/4 — Registering image...',
-    captions: 'Step 4/4 — Generating captions...',
+    captions: mode === 'test' ? 'Step 1/1 — Generating captions...' : 'Step 4/4 — Generating captions...',
     done: '',
     error: '',
   }
 
   const isLoading = ['presign', 'upload', 'register', 'captions'].includes(step)
+  const canGenerate = mode === 'test' ? !!selectedTestImage : !!file
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
@@ -123,36 +145,82 @@ export default function TestCaptionGenerator({
         Generate Test Captions
       </h2>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-        Upload an image to generate captions using the <span className="font-mono text-purple-600 dark:text-purple-400">{flavorSlug}</span> humor flavor
+        Generate captions using the <span className="font-mono text-purple-600 dark:text-purple-400">{flavorSlug}</span> humor flavor
       </p>
 
-      {/* Image picker */}
-      <div
-        className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-600 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors mb-4"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/heic"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        {preview ? (
-          <img src={preview} alt="Preview" className="max-h-64 rounded-lg object-contain" />
-        ) : (
-          <div className="text-center">
-            <p className="text-3xl mb-2">📷</p>
-            <p className="text-slate-600 dark:text-slate-400 font-medium">Click to select an image</p>
-            <p className="text-slate-400 dark:text-slate-600 text-sm mt-1">JPEG, PNG, WebP, GIF, HEIC</p>
-          </div>
-        )}
+      {/* Mode toggle */}
+      <div className="flex gap-1 mb-5 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+        <button
+          onClick={() => { setMode('test'); setStep('idle'); setErrorMsg(''); setCaptions([]); setUploadedImageUrl(null) }}
+          className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'test' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+        >
+          Test Images
+        </button>
+        <button
+          onClick={() => { setMode('upload'); setStep('idle'); setErrorMsg(''); setCaptions([]); setUploadedImageUrl(null) }}
+          className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'upload' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+        >
+          Custom Upload
+        </button>
       </div>
 
-      {file && (
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
-          {file.name} ({(file.size / 1024).toFixed(1)} KB)
-        </p>
+      {/* Test Images grid */}
+      {mode === 'test' && (
+        testImages.length === 0 ? (
+          <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center mb-4">
+            <p className="text-slate-400 dark:text-slate-600 text-sm">No test images found in the database.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {testImages.map((img) => (
+              <button
+                key={img.id}
+                onClick={() => setSelectedTestImage(img)}
+                className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-square ${selectedTestImage?.id === img.id ? 'border-purple-500 ring-2 ring-purple-500/30' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'}`}
+              >
+                <img src={img.url} alt={`Test image ${img.id}`} className="w-full h-full object-cover" />
+                {selectedTestImage?.id === img.id && (
+                  <div className="absolute inset-0 bg-purple-500/10 flex items-center justify-center">
+                    <span className="bg-purple-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">✓</span>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Custom upload */}
+      {mode === 'upload' && (
+        <>
+          <div
+            className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-600 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors mb-4"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/heic"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            {preview ? (
+              <img src={preview} alt="Preview" className="max-h-64 rounded-lg object-contain" />
+            ) : (
+              <div className="text-center">
+                <p className="text-3xl mb-2">📷</p>
+                <p className="text-slate-600 dark:text-slate-400 font-medium">Click to select an image</p>
+                <p className="text-slate-400 dark:text-slate-600 text-sm mt-1">JPEG, PNG, WebP, GIF, HEIC</p>
+              </div>
+            )}
+          </div>
+
+          {file && (
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
+              {file.name} ({(file.size / 1024).toFixed(1)} KB)
+            </p>
+          )}
+        </>
       )}
 
       {/* Status */}
@@ -169,7 +237,7 @@ export default function TestCaptionGenerator({
       {/* Generate button */}
       <button
         onClick={handleGenerate}
-        disabled={!file || isLoading}
+        disabled={!canGenerate || isLoading}
         className="w-full py-3 rounded-xl font-semibold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isLoading ? 'Generating...' : 'Generate Captions'}
