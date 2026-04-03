@@ -172,8 +172,8 @@ export default function TestCaptionGenerator({
           </div>
         ) : (
           <div className="flex gap-3 mb-4">
-            {/* Scrollable thumbnail strip */}
-            <div className="flex-1 min-w-0">
+            {/* Scrollable thumbnail grid */}
+            <div className="flex-1 min-w-0 h-48 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 p-1.5">
               <div className="flex flex-wrap gap-1.5">
                 {testImages.map((img) => (
                   <button
@@ -193,7 +193,7 @@ export default function TestCaptionGenerator({
             </div>
             {/* Selected image preview */}
             {selectedTestImage && (
-              <div className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-500 ring-2 ring-purple-500/30">
+              <div className="flex-shrink-0 w-48 h-48 rounded-xl overflow-hidden border-2 border-purple-500 ring-2 ring-purple-500/30">
                 <img src={selectedTestImage.url} alt="Selected" className="w-full h-full object-cover" />
               </div>
             )}
