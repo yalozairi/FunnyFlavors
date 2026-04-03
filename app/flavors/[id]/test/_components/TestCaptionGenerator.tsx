@@ -171,21 +171,32 @@ export default function TestCaptionGenerator({
             <p className="text-slate-400 dark:text-slate-600 text-sm">No test images found in the database.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {testImages.map((img) => (
-              <button
-                key={img.id}
-                onClick={() => setSelectedTestImage(img)}
-                className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-square ${selectedTestImage?.id === img.id ? 'border-purple-500 ring-2 ring-purple-500/30' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'}`}
-              >
-                <img src={img.url} alt={`Test image ${img.id}`} className="w-full h-full object-cover" />
-                {selectedTestImage?.id === img.id && (
-                  <div className="absolute inset-0 bg-purple-500/10 flex items-center justify-center">
-                    <span className="bg-purple-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">✓</span>
-                  </div>
-                )}
-              </button>
-            ))}
+          <div className="flex gap-3 mb-4">
+            {/* Scrollable thumbnail strip */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap gap-1.5">
+                {testImages.map((img) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setSelectedTestImage(img)}
+                    className={`relative rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 w-14 h-14 ${selectedTestImage?.id === img.id ? 'border-purple-500 ring-2 ring-purple-500/30' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'}`}
+                  >
+                    <img src={img.url} alt={`Test image ${img.id}`} className="w-full h-full object-cover" />
+                    {selectedTestImage?.id === img.id && (
+                      <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
+                        <span className="bg-purple-600 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">✓</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Selected image preview */}
+            {selectedTestImage && (
+              <div className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-500 ring-2 ring-purple-500/30">
+                <img src={selectedTestImage.url} alt="Selected" className="w-full h-full object-cover" />
+              </div>
+            )}
           </div>
         )
       )}
@@ -253,8 +264,8 @@ export default function TestCaptionGenerator({
       {/* Results */}
       {step === 'done' && (
         <div className="mt-6">
-          {uploadedImageUrl && (
-            <img src={uploadedImageUrl} alt="Uploaded" className="w-full max-h-48 object-cover rounded-xl mb-4" />
+          {uploadedImageUrl && mode === 'upload' && (
+            <img src={uploadedImageUrl} alt="Uploaded" className="w-full max-h-40 object-cover rounded-xl mb-4" />
           )}
           <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
             Generated Captions ({captions.length})
