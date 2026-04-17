@@ -15,6 +15,7 @@ export default function FlavorEditor({ flavor }: { flavor: Flavor }) {
   const [slug, setSlug] = useState(flavor.slug)
   const [description, setDescription] = useState(flavor.description ?? '')
   const [loading, setLoading] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -45,6 +46,27 @@ export default function FlavorEditor({ flavor }: { flavor: Flavor }) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDuplicate = async () => {
+    setError('')
+    setSuccess(false)
+    setDuplicating(true)
+
+    try {
+      const res = await fetch(`/api/flavors/${flavor.id}/duplicate`, { method: 'POST' })
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Failed to duplicate flavor')
+      }
+
+      router.push(`/flavors/${data.id}`)
+      router.refresh()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      setDuplicating(false)
     }
   }
 
@@ -105,19 +127,30 @@ export default function FlavorEditor({ flavor }: { flavor: Flavor }) {
         </div>
 
         <div className="flex items-center justify-between pt-1">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={loading || duplicating}
+              className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button
+              type="button"
+              onClick={handleDuplicate}
+              disabled={loading || duplicating || deleting}
+              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+            >
+              {duplicating ? 'Duplicating...' : 'Duplicate Flavor'}
+            </button>
+          </div>
 
           <div>
             {!showDeleteConfirm ? (
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
+                disabled={duplicating}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               >
                 Delete Flavor
